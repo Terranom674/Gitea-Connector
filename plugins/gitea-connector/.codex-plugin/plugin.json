@@ -1,6 +1,6 @@
 {
   "name": "gitea-connector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Manage Gitea projects with direct repository tools and a safety-filtered operations catalog.",
   "author": {
     "name": "Bratonien"
@@ -26,4 +26,4 @@
     ]
   },
   "mcpServers": "./.mcp.json"
-}\n
+}
