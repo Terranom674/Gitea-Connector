@@ -1,0 +1,29 @@
+{
+  "name": "gitea-connector",
+  "version": "1.0.0",
+  "description": "Manage Gitea projects with direct repository tools and a safety-filtered operations catalog.",
+  "author": {
+    "name": "Bratonien"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Gitea Connector",
+    "shortDescription": "Read data from git.bratonien.de.",
+    "longDescription": "Connects Codex to git.bratonien.de with direct tools for files, multi-file commits, branches, tags, issues, pull requests, reviews, merges, and releases plus a safety-filtered operations catalog. Passwords, tokens, secrets, keys, user administration, permissions, runners, and webhooks are excluded. Writes and destructive actions require confirmation.",
+    "developerName": "Bratonien",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "brandColor": "#238B23",
+    "composerIcon": "./assets/composer-icon.png",
+    "logo": "./assets/logo.png",
+    "defaultPrompt": [
+      "List my Gitea repositories.",
+      "Show the latest commits in a repository.",
+      "Summarize open issues and pull requests."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}\n
