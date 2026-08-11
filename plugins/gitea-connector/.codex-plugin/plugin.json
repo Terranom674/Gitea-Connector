@@ -1,15 +1,15 @@
 {
   "name": "gitea-connector",
-  "version": "1.0.1",
-  "description": "Manage Gitea projects with direct repository tools and a safety-filtered operations catalog.",
+  "version": "1.1.0",
+  "description": "Manage self-hosted Gitea projects with direct repository tools and a safety-filtered operations catalog.",
   "author": {
     "name": "Bratonien"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Gitea Connector",
-    "shortDescription": "Read data from git.bratonien.de.",
-    "longDescription": "Connects Codex to git.bratonien.de with direct tools for files, multi-file commits, branches, tags, issues, pull requests, reviews, merges, and releases plus a safety-filtered operations catalog. Passwords, tokens, secrets, keys, user administration, permissions, runners, and webhooks are excluded. Writes and destructive actions require confirmation.",
+    "shortDescription": "Connect Codex to your own Gitea instance.",
+    "longDescription": "Connects Codex to a user-configured Gitea instance with direct tools for files, multi-file commits, branches, tags, issues, pull requests, reviews, merges, and releases plus a safety-filtered operations catalog. Passwords, tokens, secrets, keys, user administration, permissions, runners, and webhooks are excluded. Writes and destructive actions require confirmation.",
     "developerName": "Bratonien",
     "category": "Developer Tools",
     "capabilities": [
