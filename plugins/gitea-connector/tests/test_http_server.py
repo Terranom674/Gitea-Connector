@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import os
 import sys
 import unittest
@@ -14,6 +15,15 @@ SPEC.loader.exec_module(http_server)
 
 
 class HttpServerTests(unittest.TestCase):
+    def test_protocol_logging_omits_arguments_and_reports_tool_count(self):
+        message = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {"secret": "never-log"}}
+        response = {"jsonrpc": "2.0", "id": 2, "result": {"tools": [{"name": "one"}, {"name": "two"}]}}
+        output = io.StringIO()
+        with patch("sys.stderr", output):
+            http_server._log_mcp_method(message, response)
+        self.assertEqual(output.getvalue(), "MCP method=tools/list tools=2\n")
+        self.assertNotIn("never-log", output.getvalue())
+
     def test_http_token_is_optional(self):
         with patch.dict(os.environ, {}, clear=True):
             self.assertTrue(http_server._authorized(None))
