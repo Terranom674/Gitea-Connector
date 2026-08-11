@@ -19,7 +19,7 @@ case "$LANGUAGE" in
     SCRIPT="proxmox-de-v2.sh"
     ;;
   2|en|EN|English|english)
-    SCRIPT="proxmox-en-run.sh"
+    SCRIPT="proxmox-en-v2.sh"
     ;;
   *)
     echo "Ungültige Auswahl / Invalid selection." >&2
