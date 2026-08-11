@@ -2,9 +2,9 @@
   "mcpServers": {
     "gitea": {
       "command": "python3",
-      "args": ["${PLUGIN_ROOT}/server.py"],
+      "args": ["${PLUGIN_ROOT}/entrypoint.py"],
       "cwd": "${PLUGIN_ROOT}",
-      "env_vars": ["GITEA_TOKEN"]
+      "env_vars": ["GITEA_URL", "GITEA_TOKEN"]
     }
   }
 }
