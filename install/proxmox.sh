@@ -113,7 +113,7 @@ rm -rf /tmp/openai-tunnel-client
 '
 
 # Store tunnel credentials only inside the LXC with root-only permissions.
-printf 'CONTROL_PLANE_TUNNEL_ID=%s\nCONTROL_PLANE_API_KEY=%s\nMCP_SERVER_URL=http://127.0.0.1:8000/mcp\nMCP_EXTRA_HEADERS=Authorization: Bearer %s\nMCP_DISCOVERY_EXTRA_HEADERS=Authorization: Bearer %s\nHEALTH_LISTEN_ADDR=127.0.0.1:8080\nLOG_LEVEL=info\nLOG_FORMAT=struct-text\n' \
+printf 'CONTROL_PLANE_TUNNEL_ID=%s\nCONTROL_PLANE_API_KEY=%s\nMCP_SERVER_URL=http://127.0.0.1:8000/mcp\nMCP_EXTRA_HEADERS="Authorization: Bearer %s"\nMCP_DISCOVERY_EXTRA_HEADERS="Authorization: Bearer %s"\nHEALTH_LISTEN_ADDR=127.0.0.1:8080\nLOG_LEVEL=info\nLOG_FORMAT=struct-text\n' \
   "$OPENAI_TUNNEL_ID" "$OPENAI_TUNNEL_API_KEY" "$MCP_HTTP_TOKEN" "$MCP_HTTP_TOKEN" |
   pct exec "$CTID" -- bash -lc 'umask 077; cat > /etc/gitea-mcp-tunnel.env'
 
@@ -138,9 +138,9 @@ systemctl daemon-reload
 systemctl enable --now gitea-mcp-tunnel.service
 '
 
-# Verify both local services before handing the LXC over to normal unattended operation.
+# Verify the MCP and a successful tunnel control-plane poll before handoff.
 pct exec "$CTID" -- bash -lc 'for i in {1..30}; do curl -fsS http://127.0.0.1:8000/health >/dev/null && exit 0; sleep 2; done; echo "Gitea MCP health check failed." >&2; exit 1'
-pct exec "$CTID" -- bash -lc 'for i in {1..30}; do curl -fsS http://127.0.0.1:8080/healthz >/dev/null && exit 0; sleep 2; done; systemctl --no-pager --full status gitea-mcp-tunnel.service || true; echo "OpenAI tunnel-client health check failed." >&2; exit 1'
+pct exec "$CTID" -- bash -lc 'for i in {1..30}; do curl -fsS http://127.0.0.1:8080/readyz >/dev/null && exit 0; sleep 2; done; systemctl --no-pager --full status gitea-mcp-tunnel.service || true; echo "OpenAI tunnel-client did not become ready." >&2; exit 1'
 
 IP="$(pct exec "$CTID" -- hostname -I 2>/dev/null | awk '{print $1}')"
 
@@ -149,7 +149,7 @@ echo "Gitea MCP installation completed."
 echo "LXC ID: $CTID"
 echo "LXC IP: ${IP:-unknown}"
 echo "Gitea MCP: running"
-echo "OpenAI Secure MCP Tunnel client: running"
+echo "OpenAI Secure MCP Tunnel: connected and ready"
 echo "Tunnel ID: $OPENAI_TUNNEL_ID"
 echo
 echo "The LXC is now intended to run unattended."
