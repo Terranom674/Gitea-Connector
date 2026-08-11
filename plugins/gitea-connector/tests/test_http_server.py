@@ -45,6 +45,14 @@ class HttpServerTests(unittest.TestCase):
             self.assertEqual(metadata["resource"], "https://mcp.example.com/mcp")
             self.assertEqual(metadata["authorization_servers"], ["https://git.example.com"])
 
+    def test_oauth_server_metadata_points_to_gitea(self):
+        with patch.dict(os.environ, {"MCP_OAUTH_ISSUER": "https://git.example.com"}, clear=True):
+            metadata = http_server._oauth_server_metadata()
+            self.assertEqual(metadata["issuer"], "https://git.example.com")
+            self.assertEqual(metadata["authorization_endpoint"], "https://git.example.com/login/oauth/authorize")
+            self.assertEqual(metadata["token_endpoint"], "https://git.example.com/login/oauth/access_token")
+            self.assertIn("client_secret_post", metadata["token_endpoint_auth_methods_supported"])
+
     def test_allowed_origins_are_explicit(self):
         with patch.dict(os.environ, {"MCP_ALLOWED_ORIGINS": "https://example.com, https://chat.example"}, clear=True):
             self.assertEqual(
