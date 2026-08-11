@@ -13,38 +13,60 @@ For the full Proxmox installation, have these values ready:
 
 The installer does **not** create the OpenAI tunnel credentials for you. Create the Secure MCP Tunnel and its runtime credentials in the OpenAI Platform before starting the installation, then keep the tunnel ID and runtime API key ready for section 4 of the installer.
 
-### Important: OpenAI Platform account required
+## Important: OpenAI Platform account required
 
 The tunnel is created in the **OpenAI Platform**, not inside the normal ChatGPT settings.
 
-Before you can create a tunnel, you need access to an OpenAI Platform account. If you have not used the OpenAI Platform before, create/activate the Platform account first and sign in there.
+If you have not used the OpenAI Platform before, first create/activate a Platform account and sign in. After that, open the Platform's **Tunnels** area and select **Create tunnel**.
 
-After that you can open the Platform's **Tunnels** area and create a tunnel with **Create tunnel**. The created tunnel is then listed with its tunnel ID beginning with `tunnel_`.
+### 1. Create the tunnel
 
-In short:
+1. Sign in to the OpenAI Platform.
+2. Open **Tunnels**.
+3. Click **Create tunnel**.
+4. Give the tunnel a descriptive name, for example `Gitea MCP`.
+5. Create the tunnel.
+6. Copy the displayed tunnel ID. It begins with `tunnel_`.
 
-1. Create/activate an OpenAI Platform account or sign in to the Platform.
-2. Open the **Tunnels** area.
-3. Select **Create tunnel**.
-4. Give the tunnel a name and create it.
-5. Copy the displayed tunnel ID (`tunnel_...`).
-6. Create a suitable tunnel runtime API key.
-7. Keep the tunnel ID and runtime API key ready for the Proxmox installer.
+Keep this ID. The Proxmox installer asks for it as:
 
-Do this **before** starting the Proxmox installation. Otherwise the installer will reach section 4 without the required credentials.
+```text
+OpenAI Secure MCP Tunnel-ID (tunnel_...):
+```
 
-OpenAI documents Secure MCP Tunnel as the supported way to connect a private/on-premises MCP server to supported OpenAI products without exposing that MCP server directly to the public internet.
+### 2. Create the tunnel runtime API key
 
-### OpenAI Secure MCP Tunnel preparation
+The runtime key is created separately from the tunnel.
 
-Before running the installer:
+1. In the OpenAI Platform, open **API Keys**.
+2. Click **Create new secret key**.
+3. Under **Owned by**, select **You**.
+4. Enter a descriptive name, for example `Gitea MCP Tunnel`.
+5. Select the project that owns the key.
+6. Under **Permissions**, select **Restricted**.
+7. Leave all unrelated permission categories set to **None**.
+8. Find **Tunnels** and set it to **All selected**. In the current August 2026 Platform UI this selects the two tunnel permissions required for runtime use.
+9. Click **Create secret key**.
+10. Copy the generated `sk-...` key immediately and store it securely. The secret is only shown when it is created.
 
-1. Sign in to the OpenAI Platform with the organization that will own the tunnel.
-2. Create or select a Secure MCP Tunnel in the Platform's tunnel management area.
-3. Copy the resulting tunnel ID. It begins with `tunnel_`.
-4. Create a runtime API key intended for that tunnel/client and give it the required tunnel permissions for runtime use.
-5. Store the runtime API key securely. Do not commit it to Git or paste it into public logs.
-6. Keep both values ready. The Proxmox installer will ask for them in the `OpenAI Secure MCP Tunnel` section.
+The finished restricted key should therefore have only the tunnel permissions enabled; model, assistant, file, batch and other API permissions remain disabled.
+
+This key is the value requested by the installer as:
+
+```text
+OpenAI Tunnel Runtime API-Key:
+```
+
+Do **not** commit the key to Git, paste it into public logs, or reuse an unrestricted general-purpose API key when a dedicated tunnel key can be used.
+
+### Preparation checklist
+
+Before starting the Proxmox installer, make sure you have:
+
+1. your Gitea URL,
+2. your Gitea access token,
+3. the OpenAI tunnel ID (`tunnel_...`),
+4. the dedicated restricted tunnel runtime key (`sk-...`).
 
 The installer stores the runtime key inside the created LXC in a root-only environment file for the `tunnel-client` systemd service.
 
