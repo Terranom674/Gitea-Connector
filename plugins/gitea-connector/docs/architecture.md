@@ -2,49 +2,60 @@
 
 ## Goal
 
-The connector is a reusable bridge between Codex and a self-hosted Gitea instance. It must not depend on a specific hostname, repository owner, or deployment.
+The plugin provides reusable Gitea workflows for ChatGPT while keeping the user's Gitea instance, MCP server, endpoint, and credentials under the user's control.
 
-Gitea exposes the required project data through its `/api/v1` REST API and normally publishes an instance-specific OpenAPI document at `/swagger.v1.json`.
+The plugin must not depend on a specific hostname, repository owner, deployment, or MCP display name.
 
-## Current deployment model
+## ChatGPT deployment model
 
-The current plugin bundles a dependency-free Python MCP server that communicates with Codex over stdio.
+The Gitea MCP server is configured separately in ChatGPT as a custom Streamable HTTP MCP server. The plugin does not create, start, host, proxy, or provision that connection.
 
 ```text
-Codex
-  -> plugin
-    -> entrypoint.py
-      -> server.py
-        -> configured Gitea /api/v1
+ChatGPT
+  -> Gitea Connector plugin
+    -> bundled workflow skills
+      -> already configured callable Gitea MCP tools
+        -> Streamable HTTP MCP endpoint
+          -> self-hosted Gitea MCP
+            -> self-hosted Gitea /api/v1
 ```
 
-The target instance is selected at runtime with `GITEA_URL`. Authentication is supplied separately with `GITEA_TOKEN`.
+The plugin contains no `.mcp.json` and no workspace-specific `.app.json` binding. This is deliberate: the same plugin can be used with independently operated Gitea MCP servers, while the connection itself remains configured and authenticated separately in ChatGPT.
 
-This keeps one published plugin usable with many independent Gitea installations without routing credentials or repository traffic through infrastructure operated by the plugin author.
+## Connection boundary
 
-## Configuration boundary
+The plugin must use only Gitea-related MCP tools that are already callable in the current ChatGPT session.
 
-`GITEA_URL` is configuration, not a tool argument. The model cannot redirect an individual request to another host. The entry point validates that it is an absolute HTTP(S) URL and rejects embedded credentials, query strings, and fragments.
+It must not:
 
-`GITEA_TOKEN` is forwarded only as process environment and must never be returned by a tool or committed to the repository.
+- invent or provision another MCP connection,
+- require a fixed MCP display name,
+- create a Codex stdio MCP configuration,
+- fall back to GitHub for private Gitea data,
+- ask the model to handle Gitea or MCP credentials directly.
 
-For internet-facing deployments, HTTPS should be used. Plain HTTP is only appropriate where the operator deliberately accepts that risk, for example inside a trusted local network.
+If no suitable Gitea MCP tools are callable, the plugin should report that the separately configured self-hosted Gitea MCP must be enabled in ChatGPT.
+
+## MCP server boundary
+
+The self-hosted MCP server is responsible for the actual Gitea API connection and authentication. A typical deployment exposes a Streamable HTTP endpoint over HTTPS, directly or through the operator's own reverse proxy or secure tunnel.
+
+The MCP implementation in this repository uses the configured Gitea base URL and access token on the server side. Those credentials are not plugin inputs and must not be returned through MCP tools.
 
 ## Safety boundary
 
-- The Gitea origin is fixed for the lifetime of the MCP process.
-- Repository-specific operations require explicit `owner` and `repo` inputs.
-- Pagination limits are enforced server-side.
-- Authorization headers, tokens, internal errors, and unnecessary personal data are redacted.
-- Read, write, and destructive operations carry separate MCP annotations.
+- Repository-specific operations require explicit owner and repository inputs where the MCP tool requires them.
+- Pagination and upstream API validation are enforced by the MCP server.
+- Authorization headers, tokens, internal errors, and unnecessary personal data are redacted by the MCP implementation.
+- Read, write, and destructive operations remain distinct.
 - Passwords, token management, secrets, keys, user administration, permissions, runners, and webhooks remain excluded.
-- Consequential writes such as merges, deletions, and branch changes require explicit user confirmation.
+- Consequential writes such as merges, deletions, and branch changes require explicit confirmation when no product-level confirmation is already provided.
 - Ambiguous writes must not be retried automatically.
 
 ## Compatibility
 
-The original implementation and operation catalog were verified against Gitea 1.24.5. Because Gitea API surfaces can vary between releases, operators should validate the connector against their own Gitea version before enabling consequential write workflows.
+The original operation catalog was verified against Gitea 1.24.5. Gitea API surfaces can vary between releases, so operators should validate the self-hosted MCP against their target Gitea version before relying on consequential write workflows.
 
-## Future remote-MCP deployment
+## Separation from Codex stdio support
 
-The bundled stdio server is appropriate for Codex and self-hosted use. A later hosted or remotely reachable edition should expose streamable HTTP over HTTPS and implement the applicable MCP authorization flow. That remote service should remain optional; self-hosting is the baseline distribution model so users do not need to send Gitea credentials through infrastructure run by the plugin author.
+The repository may contain MCP server implementation files useful for self-hosting and development, but the ChatGPT plugin does not bind or launch them through Codex stdio. For this plugin workflow, the source of truth is the separately configured Streamable HTTP MCP connection already present in ChatGPT.
