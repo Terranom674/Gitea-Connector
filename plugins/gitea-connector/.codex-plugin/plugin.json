@@ -1,19 +1,19 @@
 {
   "name": "gitea-connector",
-  "version": "1.2.0",
-  "description": "Use a self-hosted Gitea instance through a separately configured Gitea MCP app in ChatGPT.",
+  "version": "1.3.0",
+  "description": "Gitea workflows for ChatGPT using a separately configured self-hosted Gitea MCP server.",
   "author": {
     "name": "Bratonien"
   },
   "skills": "./skills/",
-  "apps": "./.app.json",
   "interface": {
     "displayName": "Gitea Connector",
-    "shortDescription": "Work with your self-hosted Gitea instance through its MCP app.",
-    "longDescription": "Adds Gitea workflows for repositories, files, commits, branches, tags, issues, pull requests, reviews, merges and releases. The plugin does not host or launch Gitea or the MCP server itself. It expects a separately configured Gitea MCP app that points to the user's own self-hosted MCP endpoint. Passwords, tokens, secrets, keys, user administration, permissions, runners and webhooks remain excluded from the workflow surface. Writes and destructive actions require confirmation.",
+    "shortDescription": "Work with a self-hosted Gitea instance through your own MCP server.",
+    "longDescription": "Adds Gitea workflows for repositories, files, commits, branches, tags, issues, pull requests, reviews, merges and releases. The plugin does not host, launch or provision the MCP connection inside ChatGPT. Each user configures their own self-hosted Gitea MCP server separately in ChatGPT. The plugin then uses the callable tools exposed by that configured MCP server. Passwords, tokens, secrets, keys, user administration, permissions, runners and webhooks remain excluded from the workflow surface. Writes and destructive actions require confirmation.",
     "developerName": "Bratonien",
     "category": "Developer Tools",
     "capabilities": [
+      "Interactive",
       "Read",
       "Write"
     ],
