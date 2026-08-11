@@ -1,25 +1,44 @@
 # Gitea Connector
 
-Controlled read and write connector for `https://git.bratonien.de`.
+A self-hostable Codex connector for Gitea.
 
-## Status
+The plugin connects Codex to a Gitea instance chosen by the user. The instance URL and access token are supplied through environment variables; no Gitea host or credentials are stored in the repository.
 
-Version 1.0 uses Python's standard library and needs no package installation. It supports direct repository tools plus 221 safety-filtered Gitea project operations. The plugin forwards `GITEA_TOKEN` from the local Codex environment to the MCP process. Never store the token in this plugin directory or commit it to source control.
+## Requirements
+
+- Python 3
+- A reachable Gitea instance
+- A Gitea access token with only the permissions you actually want the connector to use
+
+No additional Python packages are required.
+
+## Configuration
+
+Set these environment variables before starting Codex:
+
+```bash
+export GITEA_URL="https://git.example.com"
+export GITEA_TOKEN="your-token"
+```
+
+`GITEA_URL` must be the base URL of the Gitea instance without `/api/v1`. Credentials must never be placed in the URL.
+
+The plugin forwards both variables to the bundled MCP process. Never store the token in this plugin directory or commit it to source control.
 
 ## Architecture
 
 ```text
-ChatGPT / Codex
+Codex
     -> Gitea Connector plugin
         -> bundled workflow skill
         -> bundled MCP server over stdio
             -> HTTPS Gitea API /api/v1
-                -> git.bratonien.de
+                -> user-configured Gitea instance
 ```
 
-The MCP server is the security boundary. It validates all inputs, holds or receives credentials, calls only allowlisted Gitea API routes, removes secrets from results, and returns stable structured data.
+The MCP server is the security boundary. It validates inputs, calls only allowlisted Gitea API routes, removes secrets from results, and returns stable structured data.
 
-## Version 1.0 scope
+## Scope
 
 - Read repositories, files, branches, commits, issues, pull requests, reviews, tags, releases, packages, Actions data, and other project information.
 - Create, update, move, and delete text files, including up to 50 file operations in one commit.
@@ -30,14 +49,24 @@ The MCP server is the security boundary. It validates all inputs, holds or recei
 - Exclude passwords, tokens, secrets, keys, user administration, permissions, runners, and webhooks.
 - Redact sensitive user and credential metadata from generic operation results.
 
-## Live verification
+The current operation catalog contains 221 safety-filtered Gitea project operations inherited from the tested Bratonien implementation.
 
-Version 1.0 was exercised against `Thomas/LANELA` with temporary branches, multi-file commits, an issue lifecycle, a pull request with comment and review, a squash merge, a tag, and a release. Temporary resources were removed afterward and `main` remained unchanged.
+## Compatibility note
 
-See [docs/architecture.md](docs/architecture.md) and [docs/tool-contracts.md](docs/tool-contracts.md).
+The original implementation was tested against Gitea 1.24.5. Other Gitea versions may expose slightly different API operations. The connector should therefore be tested against the target instance before relying on write operations in production.
 
 ## Local verification
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
+
+A minimal MCP startup test can also be run by setting `GITEA_URL` and `GITEA_TOKEN` and launching:
+
+```bash
+python3 entrypoint.py
+```
+
+The process then communicates over MCP stdio.
+
+See [docs/architecture.md](docs/architecture.md) and [docs/tool-contracts.md](docs/tool-contracts.md).
