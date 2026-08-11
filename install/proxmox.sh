@@ -16,10 +16,10 @@ LANGUAGE="${LANGUAGE:-1}"
 
 case "$LANGUAGE" in
   1|de|DE|Deutsch|deutsch)
-    SCRIPT="proxmox-de.sh"
+    SCRIPT="proxmox-de-run.sh"
     ;;
   2|en|EN|English|english)
-    SCRIPT="proxmox-en.sh"
+    SCRIPT="proxmox-en-run.sh"
     ;;
   *)
     echo "Ungültige Auswahl / Invalid selection." >&2
