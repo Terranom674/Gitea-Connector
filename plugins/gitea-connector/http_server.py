@@ -15,6 +15,11 @@ import server
 MAX_REQUEST_SIZE = 2_000_000
 MCP_PATH = "/mcp"
 HEALTH_PATH = "/health"
+OAUTH_METADATA_PATHS = {
+    "/.well-known/oauth-protected-resource",
+    "/.well-known/oauth-protected-resource/mcp",
+    "/mcp/.well-known/oauth-protected-resource",
+}
 
 
 def _allowed_origins():
@@ -22,13 +27,43 @@ def _allowed_origins():
     return {value.strip() for value in raw.split(",") if value.strip()}
 
 
-def _authorized(header: Optional[str]) -> bool:
+def _oauth_issuer() -> str:
+    return os.environ.get("MCP_OAUTH_ISSUER", "").strip().rstrip("/")
+
+
+def _resource_url() -> str:
+    return os.environ.get("MCP_RESOURCE_URL", "").strip() or "https://mcp.bratonien.de/mcp"
+
+
+def _authorization(header: Optional[str]):
+    """Return (authorized, OAuth token). None means legacy server authentication."""
     expected = os.environ.get("MCP_HTTP_TOKEN", "").strip()
-    if not expected:
-        return True
     if not header or not header.startswith("Bearer "):
-        return False
-    return hmac.compare_digest(header[7:], expected)
+        return (not expected and not _oauth_issuer()), None
+    token = header[7:].strip()
+    if not token:
+        return False, None
+    if expected and hmac.compare_digest(token, expected):
+        return True, None
+    if _oauth_issuer():
+        return True, token
+    return False, None
+
+
+def _authorized(header: Optional[str]) -> bool:
+    return _authorization(header)[0]
+
+
+def _oauth_metadata():
+    return {
+        "resource": _resource_url(),
+        "authorization_servers": [_oauth_issuer()],
+        "scopes_supported": [
+            "write:repository", "write:issue", "read:user",
+            "read:organization", "read:package", "read:notification",
+        ],
+        "resource_documentation": "https://github.com/Terranom674/Gitea-Connector",
+    }
 
 
 def _log_mcp_method(message, response) -> None:
@@ -75,11 +110,23 @@ class MCPHandler(BaseHTTPRequestHandler):
             self._send_json(403, {"jsonrpc": "2.0", "id": None, "error": {"code": -32000, "message": "Origin is not allowed."}})
             return False
         if not _authorized(self.headers.get("Authorization")):
-            self._send_json(401, {"jsonrpc": "2.0", "id": None, "error": {"code": -32001, "message": "Authentication required."}})
+            body = json.dumps({"jsonrpc": "2.0", "id": None, "error": {"code": -32001, "message": "Authentication required."}}, separators=(",", ":")).encode("utf-8")
+            self.send_response(401)
+            self.send_header("WWW-Authenticate", 'Bearer resource_metadata="%s/.well-known/oauth-protected-resource"' % _resource_url().split("/mcp", 1)[0])
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
             return False
         return True
 
     def do_GET(self):
+        if self.path in OAUTH_METADATA_PATHS:
+            if not _oauth_issuer():
+                self._send_json(404, {"error": "not found"})
+                return
+            self._send_json(200, _oauth_metadata())
+            return
         if self.path == HEALTH_PATH:
             self._send_json(200, {"status": "ok"})
             return
@@ -138,7 +185,14 @@ class MCPHandler(BaseHTTPRequestHandler):
             self._send_json(400, {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "Invalid Request"}})
             return
 
-        response = server.handle_message(message)
+        authorized, oauth_token = _authorization(self.headers.get("Authorization"))
+        if not authorized:
+            return
+        context_token = server.CURRENT_GITEA_OAUTH_TOKEN.set(oauth_token)
+        try:
+            response = server.handle_message(message)
+        finally:
+            server.CURRENT_GITEA_OAUTH_TOKEN.reset(context_token)
         _log_mcp_method(message, response)
         if response is None:
             self.send_response(202)
