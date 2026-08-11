@@ -4,6 +4,7 @@
 import hmac
 import json
 import os
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Optional
 
@@ -28,6 +29,24 @@ def _authorized(header: Optional[str]) -> bool:
     if not header or not header.startswith("Bearer "):
         return False
     return hmac.compare_digest(header[7:], expected)
+
+
+def _log_mcp_method(message, response) -> None:
+    """Log protocol progress without request arguments, headers, or result data."""
+    method = message.get("method") if isinstance(message, dict) else None
+    if not isinstance(method, str):
+        method = "invalid"
+    details = []
+    if method == "tools/list" and isinstance(response, dict):
+        tools = ((response.get("result") or {}).get("tools"))
+        if isinstance(tools, list):
+            details.append("tools=%d" % len(tools))
+    elif method == "tools/call":
+        name = ((message.get("params") or {}).get("name"))
+        if isinstance(name, str):
+            details.append("tool=%s" % name)
+    suffix = " " + " ".join(details) if details else ""
+    print("MCP method=%s%s" % (method, suffix), file=sys.stderr, flush=True)
 
 
 class MCPHandler(BaseHTTPRequestHandler):
@@ -120,6 +139,7 @@ class MCPHandler(BaseHTTPRequestHandler):
             return
 
         response = server.handle_message(message)
+        _log_mcp_method(message, response)
         if response is None:
             self.send_response(202)
             self.send_header("Content-Length", "0")
