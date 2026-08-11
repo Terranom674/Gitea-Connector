@@ -1,19 +1,19 @@
 ---
 name: gitea-selfhosted
-description: Use a separately configured self-hosted Gitea MCP server for repository, issue, pull request, release, branch, tag, commit, and file workflows.
+description: Use the plugin's self-hosted Gitea MCP connection for repository, issue, pull request, release, branch, tag, commit, and file workflows.
 ---
 
 # Self-hosted Gitea
 
-Use this skill when the user wants to work with a Gitea instance through their own configured MCP server.
+Use this skill when the user wants to work with the Gitea instance through the plugin's configured remote MCP server.
 
 ## Source access
 
-The plugin does not declare or provision a workspace app binding. Treat an already configured custom Gitea MCP server as the source of truth when its tools are callable in the current ChatGPT session.
+The plugin does not declare or provision a workspace app binding. Treat the plugin's declared remote Gitea MCP server as the source of truth when its tools are callable in the current ChatGPT session.
 
-Before answering a request that depends on Gitea data, use the available Gitea MCP tools rather than guessing from conversation history. If the custom MCP tools are not callable in the current session, tell the user that the self-hosted Gitea MCP connection must be enabled/configured in ChatGPT; do not substitute GitHub or a public web search for private Gitea data.
+Before answering a request that depends on Gitea data, use the available Gitea MCP tools rather than guessing from conversation history. If the MCP tools are not callable in the current session, tell the user to check the installed plugin MCP connection and authentication in ChatGPT; do not substitute GitHub or a public web search for private Gitea data.
 
-Do not require a fixed MCP display name. Identify the configured MCP by its Gitea-related tools and capabilities.
+Use the Gitea-related tools and capabilities exposed by the plugin MCP.
 
 ## Operation rules
 
