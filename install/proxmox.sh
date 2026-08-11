@@ -16,7 +16,7 @@ LANGUAGE="${LANGUAGE:-1}"
 
 case "$LANGUAGE" in
   1|de|DE|Deutsch|deutsch)
-    SCRIPT="proxmox-de-run.sh"
+    SCRIPT="proxmox-de-v2.sh"
     ;;
   2|en|EN|English|english)
     SCRIPT="proxmox-en-run.sh"
