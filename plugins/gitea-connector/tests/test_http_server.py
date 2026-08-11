@@ -34,6 +34,17 @@ class HttpServerTests(unittest.TestCase):
             self.assertFalse(http_server._authorized("Bearer wrong"))
             self.assertTrue(http_server._authorized("Bearer secret"))
 
+    def test_oauth_token_is_accepted_when_issuer_is_configured(self):
+        with patch.dict(os.environ, {"MCP_HTTP_TOKEN": "legacy", "MCP_OAUTH_ISSUER": "https://git.example.com"}, clear=True):
+            self.assertEqual(http_server._authorization("Bearer oauth-token"), (True, "oauth-token"))
+            self.assertEqual(http_server._authorization("Bearer legacy"), (True, None))
+
+    def test_oauth_metadata_describes_gitea_resource(self):
+        with patch.dict(os.environ, {"MCP_OAUTH_ISSUER": "https://git.example.com", "MCP_RESOURCE_URL": "https://mcp.example.com/mcp"}, clear=True):
+            metadata = http_server._oauth_metadata()
+            self.assertEqual(metadata["resource"], "https://mcp.example.com/mcp")
+            self.assertEqual(metadata["authorization_servers"], ["https://git.example.com"])
+
     def test_allowed_origins_are_explicit(self):
         with patch.dict(os.environ, {"MCP_ALLOWED_ORIGINS": "https://example.com, https://chat.example"}, clear=True):
             self.assertEqual(
