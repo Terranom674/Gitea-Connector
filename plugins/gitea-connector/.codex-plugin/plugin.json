@@ -1,15 +1,16 @@
 {
   "name": "gitea-connector",
-  "version": "1.1.0",
-  "description": "Manage self-hosted Gitea projects with direct repository tools and a safety-filtered operations catalog.",
+  "version": "1.2.0",
+  "description": "Use a self-hosted Gitea instance through a separately configured Gitea MCP app in ChatGPT.",
   "author": {
     "name": "Bratonien"
   },
   "skills": "./skills/",
+  "apps": "./.app.json",
   "interface": {
     "displayName": "Gitea Connector",
-    "shortDescription": "Connect Codex to your own Gitea instance.",
-    "longDescription": "Connects Codex to a user-configured Gitea instance with direct tools for files, multi-file commits, branches, tags, issues, pull requests, reviews, merges, and releases plus a safety-filtered operations catalog. Passwords, tokens, secrets, keys, user administration, permissions, runners, and webhooks are excluded. Writes and destructive actions require confirmation.",
+    "shortDescription": "Work with your self-hosted Gitea instance through its MCP app.",
+    "longDescription": "Adds Gitea workflows for repositories, files, commits, branches, tags, issues, pull requests, reviews, merges and releases. The plugin does not host or launch Gitea or the MCP server itself. It expects a separately configured Gitea MCP app that points to the user's own self-hosted MCP endpoint. Passwords, tokens, secrets, keys, user administration, permissions, runners and webhooks remain excluded from the workflow surface. Writes and destructive actions require confirmation.",
     "developerName": "Bratonien",
     "category": "Developer Tools",
     "capabilities": [
@@ -24,6 +25,5 @@
       "Show the latest commits in a repository.",
       "Summarize open issues and pull requests."
     ]
-  },
-  "mcpServers": "./.mcp.json"
+  }
 }
