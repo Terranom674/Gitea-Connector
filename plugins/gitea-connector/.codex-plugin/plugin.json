@@ -1,6 +1,6 @@
 {
   "name": "gitea-connector",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Gitea workflows for ChatGPT using the self-hosted Gitea MCP server at mcp.bratonien.de.",
   "author": {
     "name": "Bratonien"
