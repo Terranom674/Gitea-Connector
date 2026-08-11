@@ -27,7 +27,8 @@ def configured_origin() -> str:
     return raw
 
 
-def main() -> None:
+def configure_server() -> None:
+    """Apply public-instance configuration to the tested MCP implementation."""
     origin = configured_origin()
 
     server.SERVER_NAME = "gitea-connector"
@@ -43,6 +44,8 @@ def main() -> None:
             tool["description"] = description.replace("git.bratonien.de", urlparse(origin).netloc)
 
     original_handle_message = server.handle_message
+    if getattr(original_handle_message, "_gitea_public_wrapper", False):
+        return
 
     def handle_message(message):
         response = original_handle_message(message)
@@ -59,7 +62,12 @@ def main() -> None:
                 )
         return response
 
+    handle_message._gitea_public_wrapper = True
     server.handle_message = handle_message
+
+
+def main() -> None:
+    configure_server()
     server.main()
 
 
