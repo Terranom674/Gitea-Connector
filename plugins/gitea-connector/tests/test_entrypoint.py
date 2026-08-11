@@ -28,6 +28,19 @@ class EntrypointTests(unittest.TestCase):
         with patch.dict(os.environ, {"GITEA_URL": "https://example.com/gitea/"}, clear=True):
             self.assertEqual(entrypoint.configured_origin(), "https://example.com/gitea")
 
+    def test_oauth_security_scheme_is_added_to_every_tool(self):
+        original_tools = [dict(tool) for tool in entrypoint.server.TOOLS]
+        original_handle = entrypoint.server.handle_message
+        try:
+            with patch.dict(os.environ, {"GITEA_URL": "https://git.example.com", "MCP_OAUTH_ISSUER": "https://git.example.com"}, clear=True):
+                entrypoint.configure_server()
+            self.assertTrue(entrypoint.server.TOOLS)
+            for tool in entrypoint.server.TOOLS:
+                self.assertEqual(tool["securitySchemes"], [{"type": "oauth2", "scopes": entrypoint.OAUTH_SCOPES}])
+        finally:
+            entrypoint.server.TOOLS[:] = original_tools
+            entrypoint.server.handle_message = original_handle
+
     def test_rejects_credentials_in_url(self):
         with patch.dict(os.environ, {"GITEA_URL": "https://user:secret@git.example.com"}, clear=True):
             with self.assertRaises(SystemExit) as exc:
