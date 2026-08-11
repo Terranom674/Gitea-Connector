@@ -1,12 +1,15 @@
 # Gitea Connector
 
-Open-source connector that lets Codex work with a self-hosted Gitea instance through MCP.
+Open-source connector that lets Codex and, later, ChatGPT work with a self-hosted Gitea instance through MCP.
 
 The project is based on a connector originally built and tested against a private Gitea installation. It is being generalized so that each user can connect their own Gitea server without sending repository credentials through a centrally hosted service.
 
 ## Current status
 
-The current version targets **Codex with a local/self-hosted MCP process over stdio**.
+The project now supports two MCP transports:
+
+- **stdio** for local Codex use
+- **Streamable HTTP foundation** for Docker, remote MCP use, and later ChatGPT integration
 
 Users provide their own:
 
@@ -23,7 +26,7 @@ It currently provides tools for repositories, files, commits, branches, tags, is
 
 Security-sensitive operations such as password, token, secret, user-administration, permission, runner and webhook management are intentionally excluded.
 
-## Quick start
+## Local stdio start
 
 ```bash
 export GITEA_URL="https://git.example.com"
@@ -32,7 +35,19 @@ cd plugins/gitea-connector
 python3 entrypoint.py
 ```
 
-Normally Codex starts the MCP process through the bundled `.mcp.json`; running it directly is mainly useful for development and testing.
+Normally Codex starts the MCP process through the bundled `.mcp.json`.
+
+## HTTP MCP start
+
+```bash
+export GITEA_URL="https://git.example.com"
+export GITEA_TOKEN="your-token"
+export MCP_HTTP_TOKEN="choose-a-long-random-value"
+cd plugins/gitea-connector
+python3 http_server.py
+```
+
+The default MCP endpoint is `http://127.0.0.1:8000/mcp`. This is the transport that the planned Docker self-hosting setup will expose safely through HTTPS.
 
 See [`plugins/gitea-connector/README.md`](plugins/gitea-connector/README.md) for configuration, architecture and verification details.
 
