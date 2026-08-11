@@ -2,8 +2,7 @@
   "mcpServers": {
     "gitea_mcp": {
       "type": "http",
-      "url": "https://mcp.bratonien.de/mcp",
-      "bearer_token_env_var": "MCP_BEARER_TOKEN"
+      "url": "https://mcp.bratonien.de/mcp"
     }
   }
 }
