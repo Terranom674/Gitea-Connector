@@ -1,7 +1,0 @@
-{
-  "apps": {
-    "gitea": {
-      "id": "REPLACE_WITH_GITEA_MCP_APP_OR_CONNECTOR_ID"
-    }
-  }
-}
