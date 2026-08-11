@@ -1,11 +1,11 @@
 ---
 name: gitea-read
-description: Read repositories, files, branches, commits, tags, issues, pull requests, reviews, releases, and other permitted Gitea project data on git.bratonien.de.
+description: Read repositories, files, branches, commits, tags, issues, pull requests, reviews, releases, and other permitted project data from the configured Gitea instance.
 ---
 
 # Gitea Read
 
-Use the bundled Gitea MCP tools for live repository information.
+Use the bundled Gitea MCP tools for live repository information from the instance selected by `GITEA_URL`.
 
 ## Workflow
 
@@ -18,5 +18,5 @@ Use the bundled Gitea MCP tools for live repository information.
 ## Safety
 
 - Never request, display, or return a Gitea access token in conversation.
-- Never substitute another Gitea host.
+- Never substitute another Gitea host during a session; the configured instance is fixed by `GITEA_URL` when the MCP process starts.
 - Do not use write operations in a read-only task.

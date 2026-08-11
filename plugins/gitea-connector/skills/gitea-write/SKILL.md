@@ -1,11 +1,11 @@
 ---
 name: gitea-write
-description: Perform explicit, confirmed Gitea project writes through dedicated tools or the safety-filtered operations catalog on git.bratonien.de.
+description: Perform explicit, confirmed Gitea project writes through dedicated tools or the safety-filtered operations catalog on the configured Gitea instance.
 ---
 
 # Gitea Write
 
-Use the bundled Gitea MCP write tools only for explicit user-requested writes.
+Use the bundled Gitea MCP write tools only for explicit user-requested writes against the instance selected by `GITEA_URL`.
 
 ## Required workflow
 
@@ -19,6 +19,7 @@ Use the bundled Gitea MCP write tools only for explicit user-requested writes.
 ## Safety
 
 - Never request, display, or return a Gitea access token.
+- Never switch to another Gitea host during a session; the configured instance is fixed by `GITEA_URL` when the MCP process starts.
 - Never infer a repository, branch, issue number, pull-request number, title, or body for a write.
 - Immediately before updating or deleting a file, call `get_file` and use its current SHA.
 - Before a multi-file commit, read every file that will be updated or deleted and use its current SHA.

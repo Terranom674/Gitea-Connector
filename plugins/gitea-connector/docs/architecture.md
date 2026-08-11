@@ -1,38 +1,50 @@
-# Technical feasibility and minimal architecture
+# Architecture
 
-## Feasibility
+## Goal
 
-The connector is technically feasible. Gitea exposes the required data through its `/api/v1` REST API and publishes an instance-specific OpenAPI document at `/swagger.v1.json`. ChatGPT and Codex plugins can package an MCP server whose tools connect to an external system.
+The connector is a reusable bridge between Codex and a self-hosted Gitea instance. It must not depend on a specific hostname, repository owner, or deployment.
 
-The target instance was verified as Gitea 1.24.5, and the version 0.1 routes and query parameters were checked against its live OpenAPI document.
+Gitea exposes the required project data through its `/api/v1` REST API and normally publishes an instance-specific OpenAPI document at `/swagger.v1.json`.
 
-There is no special built-in ChatGPT interface for arbitrary self-hosted Git services. The supported integration boundary is MCP. The plugin packages that MCP connection plus model instructions.
+## Current deployment model
 
-## Minimal deployment
+The current plugin bundles a dependency-free Python MCP server that communicates with Codex over stdio.
 
-1. The local prototype is a dependency-free Python MCP server using stdio.
-2. The service calls only `https://git.bratonien.de/api/v1`.
-3. The first release exposes read-only tools from `tool-contracts.md`.
-4. Authentication is required because repositories may be private.
-5. This bundled stdio form is suitable for local Codex use. A later ChatGPT deployment needs streamable HTTP over public HTTPS or Secure MCP Tunnel during private development.
+```text
+Codex
+  -> plugin
+    -> entrypoint.py
+      -> server.py
+        -> configured Gitea /api/v1
+```
 
-## Authentication decision
+The target instance is selected at runtime with `GITEA_URL`. Authentication is supplied separately with `GITEA_TOKEN`.
 
-For a single-user local prototype, a Gitea token supplied to the MCP process is the smallest implementation. It must have read-only repository and issue permissions and must never be returned by a tool.
+This keeps one published plugin usable with many independent Gitea installations without routing credentials or repository traffic through infrastructure operated by the plugin author.
 
-For a distributable or multi-user ChatGPT connector, static shared tokens are unsuitable. The MCP endpoint must implement the MCP OAuth 2.1 authorization contract. Gitea can act as an OAuth2 provider, but an adapter may still be required to satisfy MCP protected-resource metadata, discovery, client registration, PKCE, token audience/resource handling, and per-request authorization.
+## Configuration boundary
+
+`GITEA_URL` is configuration, not a tool argument. The model cannot redirect an individual request to another host. The entry point validates that it is an absolute HTTP(S) URL and rejects embedded credentials, query strings, and fragments.
+
+`GITEA_TOKEN` is forwarded only as process environment and must never be returned by a tool or committed to the repository.
+
+For internet-facing deployments, HTTPS should be used. Plain HTTP is only appropriate where the operator deliberately accepts that risk, for example inside a trusted local network.
 
 ## Safety boundary
 
-- Allowlist the Gitea origin; never accept an arbitrary base URL from a tool call.
-- Require explicit `owner` and `repo` inputs for repository-specific operations.
-- Enforce pagination limits server-side.
-- Return stable identifiers and web URLs, not raw upstream responses.
-- Redact authorization headers, tokens, internal errors, and unnecessary personal data.
-- Keep read and write tools separate.
-- Add write scopes only when the corresponding write tool is implemented.
-- Require confirmation for consequential write operations such as merge, close, delete, or branch changes.
+- The Gitea origin is fixed for the lifetime of the MCP process.
+- Repository-specific operations require explicit `owner` and `repo` inputs.
+- Pagination limits are enforced server-side.
+- Authorization headers, tokens, internal errors, and unnecessary personal data are redacted.
+- Read, write, and destructive operations carry separate MCP annotations.
+- Passwords, token management, secrets, keys, user administration, permissions, runners, and webhooks remain excluded.
+- Consequential writes such as merges, deletions, and branch changes require explicit user confirmation.
+- Ambiguous writes must not be retried automatically.
 
-## Write phase 0.2
+## Compatibility
 
-Version 0.2 adds `create_issue`, `comment_on_issue`, and `create_pull_request`. They use separate write annotations, return compact audit-friendly results, and require explicit confirmation of the exact target and content. Merge, close, branch modification, deletion, admin, sudo, token management, and secret management remain out of scope.
+The original implementation and operation catalog were verified against Gitea 1.24.5. Because Gitea API surfaces can vary between releases, operators should validate the connector against their own Gitea version before enabling consequential write workflows.
+
+## Future remote-MCP deployment
+
+The bundled stdio server is appropriate for Codex and self-hosted use. A later hosted or remotely reachable edition should expose streamable HTTP over HTTPS and implement the applicable MCP authorization flow. That remote service should remain optional; self-hosting is the baseline distribution model so users do not need to send Gitea credentials through infrastructure run by the plugin author.
