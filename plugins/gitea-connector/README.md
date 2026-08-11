@@ -1,8 +1,8 @@
 # Gitea Connector
 
-A self-hostable Codex connector for Gitea.
+A self-hostable Codex and ChatGPT connector for Gitea.
 
-The plugin connects Codex to a Gitea instance chosen by the user. The instance URL and access token are supplied through environment variables; no Gitea host or credentials are stored in the repository.
+The plugin connects to a Gitea instance chosen by the user. The instance URL and access token are supplied through environment variables; no Gitea host or credentials are stored in the repository.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ No additional Python packages are required.
 
 ## Configuration
 
-Set these environment variables before starting Codex:
+Set these environment variables before starting the connector:
 
 ```bash
 export GITEA_URL="https://git.example.com"
@@ -23,17 +23,50 @@ export GITEA_TOKEN="your-token"
 
 `GITEA_URL` must be the base URL of the Gitea instance without `/api/v1`. Credentials must never be placed in the URL.
 
-The plugin forwards both variables to the bundled MCP process. Never store the token in this plugin directory or commit it to source control.
+The plugin forwards both variables to the MCP process. Never store the token in this plugin directory or commit it to source control.
+
+## Two MCP transports
+
+### Local stdio transport
+
+Codex can continue to start the connector locally through the bundled `.mcp.json`:
+
+```bash
+python3 entrypoint.py
+```
+
+### Streamable HTTP transport
+
+For Docker, remote MCP use, and later ChatGPT integration, start the independent HTTP process:
+
+```bash
+export MCP_HTTP_TOKEN="choose-a-long-random-value"
+python3 http_server.py
+```
+
+Defaults:
+
+- MCP endpoint: `http://127.0.0.1:8000/mcp`
+- Health endpoint: `http://127.0.0.1:8000/health`
+- Bind address: `127.0.0.1`
+- Port: `8000`
+
+Override the bind address or port with `MCP_HOST` and `MCP_PORT`. A Docker container will later set `MCP_HOST=0.0.0.0` inside the container and publish only the desired host port.
+
+`MCP_HTTP_TOKEN` enables Bearer authentication for the MCP endpoint. If it is empty, the endpoint is intentionally unauthenticated and should only be used for trusted local development.
+
+If a client sends an HTTP `Origin` header, that origin must be listed in the comma-separated `MCP_ALLOWED_ORIGINS` environment variable. Requests without an `Origin` header are unaffected.
+
+The HTTP implementation is currently stateless: JSON-RPC messages are sent with HTTP POST to `/mcp`. It does not yet expose a long-lived SSE receive stream, so GET on `/mcp` returns `405 Method Not Allowed`.
 
 ## Architecture
 
 ```text
-Codex
-    -> Gitea Connector plugin
-        -> bundled workflow skill
-        -> bundled MCP server over stdio
-            -> HTTPS Gitea API /api/v1
-                -> user-configured Gitea instance
+Codex -- stdio --------------------┐
+                                   v
+                            Gitea MCP core -> Gitea API
+                                   ^
+ChatGPT / remote client -- HTTP ---┘
 ```
 
 The MCP server is the security boundary. It validates inputs, calls only allowlisted Gitea API routes, removes secrets from results, and returns stable structured data.
@@ -49,7 +82,7 @@ The MCP server is the security boundary. It validates inputs, calls only allowli
 - Exclude passwords, tokens, secrets, keys, user administration, permissions, runners, and webhooks.
 - Redact sensitive user and credential metadata from generic operation results.
 
-The current operation catalog contains 221 safety-filtered Gitea project operations inherited from the tested Bratonien implementation.
+The current operation catalog contains 221 safety-filtered Gitea project operations inherited from the tested original implementation.
 
 ## Compatibility note
 
@@ -60,13 +93,5 @@ The original implementation was tested against Gitea 1.24.5. Other Gitea version
 ```bash
 python3 -m unittest discover -s tests -v
 ```
-
-A minimal MCP startup test can also be run by setting `GITEA_URL` and `GITEA_TOKEN` and launching:
-
-```bash
-python3 entrypoint.py
-```
-
-The process then communicates over MCP stdio.
 
 See [docs/architecture.md](docs/architecture.md) and [docs/tool-contracts.md](docs/tool-contracts.md).
