@@ -1,13 +1,13 @@
 ---
 name: gitea-write
-description: Perform explicit, confirmed Gitea project writes through a separately configured self-hosted Gitea MCP server.
+description: Perform explicit, confirmed Gitea project writes through the plugin's self-hosted Gitea MCP connection.
 ---
 
 # Gitea Write
 
-Use the callable write tools exposed by the user's already configured self-hosted Gitea MCP server only for explicit user-requested changes.
+Use the callable write tools exposed by the plugin's self-hosted Gitea MCP connection only for explicit user-requested changes.
 
-The plugin does not start, host, provision, or configure an MCP connection. Do not require a fixed MCP display name. Identify the configured Gitea MCP by its Gitea-related tools and capabilities available in the current ChatGPT session.
+The plugin does not start, host, or provision an MCP server. Use the Gitea-related tools exposed by its declared remote Streamable HTTP MCP connection.
 
 ## Required workflow
 
@@ -19,7 +19,7 @@ The plugin does not start, host, provision, or configure an MCP connection. Do n
 6. Perform exactly one write call after confirmation.
 7. Report the returned stable identifier and URL when provided.
 
-If the Gitea MCP tools are not callable in the current session, tell the user that their separately configured self-hosted Gitea MCP must be enabled in ChatGPT. Do not create or substitute a `.mcp.json`, Codex stdio MCP, GitHub connector, or public web request for the requested Gitea write.
+If the Gitea MCP tools are not callable in the current session, tell the user to check the installed plugin MCP connection and authentication in ChatGPT. Do not create or substitute a Codex stdio MCP, GitHub connector, or public web request for the requested Gitea write.
 
 ## Safety
 
