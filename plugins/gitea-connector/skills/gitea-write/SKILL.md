@@ -1,25 +1,30 @@
 ---
 name: gitea-write
-description: Perform explicit, confirmed Gitea project writes through dedicated tools or the safety-filtered operations catalog on the configured Gitea instance.
+description: Perform explicit, confirmed Gitea project writes through a separately configured self-hosted Gitea MCP server.
 ---
 
 # Gitea Write
 
-Use the bundled Gitea MCP write tools only for explicit user-requested writes against the instance selected by `GITEA_URL`.
+Use the callable write tools exposed by the user's already configured self-hosted Gitea MCP server only for explicit user-requested changes.
+
+The plugin does not start, host, provision, or configure an MCP connection. Do not require a fixed MCP display name. Identify the configured Gitea MCP by its Gitea-related tools and capabilities available in the current ChatGPT session.
 
 ## Required workflow
 
-1. Resolve and read the exact repository and target first.
-2. For catalog operations, call `describe_operation` before execution.
-3. Prepare the complete final change.
-4. Show the exact repository, target, operation, and content to the user and obtain confirmation.
-5. Perform exactly one write call after confirmation.
-6. Report the returned stable identifier and URL when provided.
+1. Verify that the required Gitea MCP tools are callable in the current session.
+2. Resolve and read the exact repository and target first.
+3. For catalog operations, call `describe_operation` before execution.
+4. Prepare the complete final change.
+5. Show the exact repository, target, operation, and content to the user and obtain confirmation when the product/tool does not already provide the required confirmation step.
+6. Perform exactly one write call after confirmation.
+7. Report the returned stable identifier and URL when provided.
+
+If the Gitea MCP tools are not callable in the current session, tell the user that their separately configured self-hosted Gitea MCP must be enabled in ChatGPT. Do not create or substitute a `.mcp.json`, Codex stdio MCP, GitHub connector, or public web request for the requested Gitea write.
 
 ## Safety
 
-- Never request, display, or return a Gitea access token.
-- Never switch to another Gitea host during a session; the configured instance is fixed by `GITEA_URL` when the MCP process starts.
+- Never request, display, or return a Gitea access token or MCP bearer token.
+- Do not attempt to change the Gitea server or MCP connection from the plugin.
 - Never infer a repository, branch, issue number, pull-request number, title, or body for a write.
 - Immediately before updating or deleting a file, call `get_file` and use its current SHA.
 - Before a multi-file commit, read every file that will be updated or deleted and use its current SHA.
