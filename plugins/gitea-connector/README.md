@@ -1,75 +1,99 @@
 # Gitea Connector
 
-A self-hostable Codex and ChatGPT connector for Gitea.
-
-The plugin connects to a Gitea instance chosen by the user. The instance URL and access token are supplied through environment variables; no Gitea host or credentials are stored in the repository.
-
-## Requirements
-
-- Python 3
-- A reachable Gitea instance
-- A Gitea access token with only the permissions you actually want the connector to use
-
-No additional Python packages are required.
-
-## Configuration
-
-Set these environment variables before starting the connector:
-
-```bash
-export GITEA_URL="https://git.example.com"
-export GITEA_TOKEN="your-token"
-```
-
-`GITEA_URL` must be the base URL of the Gitea instance without `/api/v1`. Credentials must never be placed in the URL.
-
-The plugin forwards both variables to the MCP process. Never store the token in this plugin directory or commit it to source control.
-
-## Two MCP transports
-
-### Local stdio transport
-
-Codex can continue to start the connector locally through the bundled `.mcp.json`:
-
-```bash
-python3 entrypoint.py
-```
-
-### Streamable HTTP transport
-
-For Docker, remote MCP use, and later ChatGPT integration, start the independent HTTP process:
-
-```bash
-export MCP_HTTP_TOKEN="choose-a-long-random-value"
-python3 http_server.py
-```
-
-Defaults:
-
-- MCP endpoint: `http://127.0.0.1:8000/mcp`
-- Health endpoint: `http://127.0.0.1:8000/health`
-- Bind address: `127.0.0.1`
-- Port: `8000`
-
-Override the bind address or port with `MCP_HOST` and `MCP_PORT`. A Docker container will later set `MCP_HOST=0.0.0.0` inside the container and publish only the desired host port.
-
-`MCP_HTTP_TOKEN` enables Bearer authentication for the MCP endpoint. If it is empty, the endpoint is intentionally unauthenticated and should only be used for trusted local development.
-
-If a client sends an HTTP `Origin` header, that origin must be listed in the comma-separated `MCP_ALLOWED_ORIGINS` environment variable. Requests without an `Origin` header are unaffected.
-
-The HTTP implementation is currently stateless: JSON-RPC messages are sent with HTTP POST to `/mcp`. It does not yet expose a long-lived SSE receive stream, so GET on `/mcp` returns `405 Method Not Allowed`.
+A ChatGPT plugin for working with a self-hosted Gitea instance through a separately configured Gitea MCP app.
 
 ## Architecture
 
+The plugin no longer starts a local MCP process. The MCP server is self-hosted by the user and added to ChatGPT as a custom Streamable HTTP MCP app.
+
 ```text
-Codex -- stdio --------------------┐
-                                   v
-                            Gitea MCP core -> Gitea API
-                                   ^
-ChatGPT / remote client -- HTTP ---┘
+ChatGPT plugin
+      |
+      v
+configured Gitea MCP app
+      |
+      v
+public HTTPS MCP endpoint
+      |
+      v
+reverse proxy / user's infrastructure
+      |
+      v
+self-hosted Gitea MCP
+      |
+      v
+self-hosted Gitea instance
 ```
 
-The MCP server is the security boundary. It validates inputs, calls only allowlisted Gitea API routes, removes secrets from results, and returns stable structured data.
+The Gitea instance, MCP server, reverse proxy, domain, TLS certificate and credentials remain under the user's control. The plugin itself does not host Gitea, proxy traffic, store credentials or require the OpenAI model API.
+
+## Requirements
+
+Before installing or using the plugin, the user must have:
+
+- a self-hosted Gitea instance,
+- a running Gitea MCP server from this repository,
+- an HTTPS endpoint reachable by ChatGPT, for example `https://mcp.example.com/mcp`,
+- Bearer authentication configured for that endpoint,
+- the MCP server added and enabled in ChatGPT as a custom Streamable HTTP MCP app.
+
+A typical reverse-proxy setup is:
+
+```text
+https://mcp.example.com/mcp
+        -> reverse proxy
+        -> http://<MCP-LXC-or-server>:8000/mcp
+```
+
+## ChatGPT MCP configuration
+
+Create a custom MCP server in ChatGPT with:
+
+- Type: `Streamable HTTP`
+- URL: `https://mcp.example.com/mcp`
+- Header name: `Authorization`
+- Header value: `Bearer YOUR_MCP_HTTP_TOKEN`
+
+Do not enter the token itself in the field labelled `Bearer token environment variable`. That field expects the name of an environment variable. For the tested self-hosted setup, the explicit `Authorization` header is used instead.
+
+A successful MCP handshake produces POST requests to `/mcp` with HTTP `200` and `202` responses.
+
+## Plugin app binding
+
+Current ChatGPT plugins bind to separately configured apps through `.app.json`. This repository therefore contains:
+
+```json
+{
+  "apps": {
+    "gitea": {
+      "id": "REPLACE_WITH_GITEA_MCP_APP_OR_CONNECTOR_ID"
+    }
+  }
+}
+```
+
+Replace the placeholder with the ID of the Gitea MCP app/connector available in the target ChatGPT workspace before importing or publishing the plugin. The plugin manifest references `.app.json`; the old local `.mcp.json`/STDIO binding has been removed.
+
+This separation is intentional: the plugin provides Gitea workflows and presentation, while each user or organization supplies its own self-hosted MCP server and ChatGPT app connection.
+
+## Server configuration
+
+The MCP server itself uses:
+
+```bash
+GITEA_URL="https://git.example.com"
+GITEA_TOKEN="your-gitea-token"
+MCP_HTTP_TOKEN="choose-a-long-random-value"
+```
+
+`GITEA_URL` is the base URL without `/api/v1`. The Gitea token should have only the permissions needed for the desired operations.
+
+The HTTP server exposes:
+
+- MCP endpoint: `/mcp`
+- Health endpoint: `/health`
+
+`MCP_HTTP_TOKEN` protects `/mcp` with Bearer authentication. The health endpoint intentionally remains available for service checks.
 
 ## Scope
 
@@ -86,7 +110,7 @@ The current operation catalog contains 221 safety-filtered Gitea project operati
 
 ## Compatibility note
 
-The original implementation was tested against Gitea 1.24.5. Other Gitea versions may expose slightly different API operations. The connector should therefore be tested against the target instance before relying on write operations in production.
+The original implementation was tested against Gitea 1.24.5. Other Gitea versions may expose slightly different API operations. Test the connector against the target instance before relying on write operations in production.
 
 ## Local verification
 
