@@ -1,16 +1,16 @@
 # Gitea Connector
 
-A ChatGPT plugin for working with a self-hosted Gitea instance through a separately configured Gitea MCP app.
+A ChatGPT plugin for working with a self-hosted Gitea instance through a separately configured custom Gitea MCP server.
 
 ## Architecture
 
-The plugin no longer starts a local MCP process. The MCP server is self-hosted by the user and added to ChatGPT as a custom Streamable HTTP MCP app.
+The plugin provides workflow instructions and presentation. It does not start, host, proxy, or provision the MCP server itself.
 
 ```text
-ChatGPT plugin
+ChatGPT plugin / skills
       |
       v
-configured Gitea MCP app
+callable custom Gitea MCP tools
       |
       v
 public HTTPS MCP endpoint
@@ -29,20 +29,20 @@ The Gitea instance, MCP server, reverse proxy, domain, TLS certificate and crede
 
 ## Requirements
 
-Before installing or using the plugin, the user must have:
+Before using the plugin, the user must have:
 
 - a self-hosted Gitea instance,
 - a running Gitea MCP server from this repository,
 - an HTTPS endpoint reachable by ChatGPT, for example `https://mcp.example.com/mcp`,
 - Bearer authentication configured for that endpoint,
-- the MCP server added and enabled in ChatGPT as a custom Streamable HTTP MCP app.
+- the MCP server added and enabled in ChatGPT as a custom Streamable HTTP MCP server.
 
 A typical reverse-proxy setup is:
 
 ```text
 https://mcp.example.com/mcp
         -> reverse proxy
-        -> http://<MCP-LXC-or-server>:8000/mcp
+        -> http://MCP-SERVER:8000/mcp
 ```
 
 ## ChatGPT MCP configuration
@@ -58,23 +58,13 @@ Do not enter the token itself in the field labelled `Bearer token environment va
 
 A successful MCP handshake produces POST requests to `/mcp` with HTTP `200` and `202` responses.
 
-## Plugin app binding
+## Plugin and MCP separation
 
-Current ChatGPT plugins bind to separately configured apps through `.app.json`. This repository therefore contains:
+This plugin intentionally contains no `.app.json` workspace binding and no bundled `.mcp.json` connection definition.
 
-```json
-{
-  "apps": {
-    "gitea": {
-      "id": "REPLACE_WITH_GITEA_MCP_APP_OR_CONNECTOR_ID"
-    }
-  }
-}
-```
+That is deliberate for the self-hosted model: every user can run their own MCP server at their own domain with their own credentials, while the same plugin supplies the Gitea workflows. The plugin's Gitea skill uses an already configured custom Gitea MCP when its tools are callable in the current ChatGPT session.
 
-Replace the placeholder with the ID of the Gitea MCP app/connector available in the target ChatGPT workspace before importing or publishing the plugin. The plugin manifest references `.app.json`; the old local `.mcp.json`/STDIO binding has been removed.
-
-This separation is intentional: the plugin provides Gitea workflows and presentation, while each user or organization supplies its own self-hosted MCP server and ChatGPT app connection.
+The plugin must not assume a fixed MCP display name or a Bratonien-specific hostname.
 
 ## Server configuration
 
