@@ -1,0 +1,14 @@
+services:
+  gitea-mcp:
+    build: .
+    container_name: gitea-mcp
+    restart: unless-stopped
+    environment:
+      GITEA_URL: ${GITEA_URL}
+      GITEA_TOKEN: ${GITEA_TOKEN}
+      MCP_HTTP_TOKEN: ${MCP_HTTP_TOKEN:-}
+      MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:-}
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8000
+    ports:
+      - "127.0.0.1:${MCP_PORT:-8000}:8000"
