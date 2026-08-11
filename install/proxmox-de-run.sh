@@ -69,6 +69,27 @@ done'''
 if old not in s:
     raise SystemExit('Network input block not found')
 s = s.replace(old, new)
+old = '''printf 'Gitea-Basis-URL (Beispiel https://git.example.com): '
+read -r GITEA_URL
+GITEA_URL="${GITEA_URL%/}"
+[[ "$GITEA_URL" =~ ^https?://[^[:space:]]+$ ]] || fehler "Ungültige Gitea-URL."'''
+new = '''while true; do
+  printf 'Gitea-Basis-URL (Beispiel git.example.com): ' > /dev/tty
+  read -r GITEA_URL < /dev/tty
+  GITEA_URL="${GITEA_URL%/}"
+  [[ -n "$GITEA_URL" ]] || { echo "Die Gitea-URL darf nicht leer sein." >&2; continue; }
+  if [[ ! "$GITEA_URL" =~ ^https?:// ]]; then
+    GITEA_URL="https://$GITEA_URL"
+    echo "https:// wurde automatisch ergänzt: $GITEA_URL" >&2
+  fi
+  if [[ "$GITEA_URL" =~ ^https?://[^[:space:]/]+(:[0-9]+)?(/.*)?$ ]]; then
+    break
+  fi
+  echo "Ungültige Gitea-URL. Bitte z. B. git.example.com oder https://git.example.com eingeben." >&2
+done'''
+if old not in s:
+    raise SystemExit('Gitea URL block not found')
+s = s.replace(old, new)
 p.write_text(s)
 PY
 exec bash "$TMP"
