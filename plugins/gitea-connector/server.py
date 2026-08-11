@@ -5,6 +5,7 @@ import base64
 import json
 import os
 import sys
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.error import HTTPError, URLError
@@ -17,6 +18,7 @@ SERVER_VERSION = "1.0.0"
 GITEA_ORIGIN = "https://git.bratonien.de"
 API_BASE = GITEA_ORIGIN + "/api/v1"
 MAX_PAGE_SIZE = 50
+CURRENT_GITEA_OAUTH_TOKEN = ContextVar("current_gitea_oauth_token", default=None)
 
 
 with (Path(__file__).resolve().parent / "operations.json").open(encoding="utf-8") as operation_file:
@@ -435,7 +437,8 @@ def compact_pull(pull: Dict[str, Any], detailed: bool = False) -> Dict[str, Any]
 
 
 def api_request(path: str, method: str = "GET", params: Optional[Dict[str, Any]] = None, body: Optional[Dict[str, Any]] = None) -> Any:
-    token = os.environ.get("GITEA_TOKEN", "").strip()
+    oauth_token = CURRENT_GITEA_OAUTH_TOKEN.get()
+    token = oauth_token or os.environ.get("GITEA_TOKEN", "").strip()
     if not token:
         raise ToolError("GITEA_TOKEN is not configured for the connector.")
     url = API_BASE + path
@@ -443,7 +446,8 @@ def api_request(path: str, method: str = "GET", params: Optional[Dict[str, Any]]
         clean = {key: value for key, value in params.items() if value is not None}
         if clean:
             url += "?" + urlencode(clean)
-    headers = {"Accept": "application/json", "Authorization": "token " + token, "User-Agent": SERVER_NAME + "/" + SERVER_VERSION}
+    authorization = ("bearer " if oauth_token else "token ") + token
+    headers = {"Accept": "application/json", "Authorization": authorization, "User-Agent": SERVER_NAME + "/" + SERVER_VERSION}
     payload = None
     if body is not None:
         headers["Content-Type"] = "application/json"
