@@ -55,7 +55,7 @@ READ_ANNOTATIONS = {
     "readOnlyHint": True,
     "destructiveHint": False,
     "idempotentHint": True,
-    "openWorldHint": True,
+    "openWorldHint": False,
 }
 
 WRITE_ANNOTATIONS = {
