@@ -20,6 +20,14 @@ OAUTH_METADATA_PATHS = {
     "/.well-known/oauth-protected-resource/mcp",
     "/mcp/.well-known/oauth-protected-resource",
 }
+OAUTH_SERVER_METADATA_PATHS = {
+    "/.well-known/oauth-authorization-server",
+    "/.well-known/oauth-authorization-server/mcp",
+    "/mcp/.well-known/oauth-authorization-server",
+    "/.well-known/openid-configuration",
+    "/.well-known/openid-configuration/mcp",
+    "/mcp/.well-known/openid-configuration",
+}
 
 
 def _allowed_origins():
@@ -63,6 +71,22 @@ def _oauth_metadata():
             "read:organization", "read:package", "read:notification",
         ],
         "resource_documentation": "https://github.com/Terranom674/Gitea-Connector",
+    }
+
+
+def _oauth_server_metadata():
+    issuer = _oauth_issuer()
+    return {
+        "issuer": issuer,
+        "authorization_endpoint": issuer + "/login/oauth/authorize",
+        "token_endpoint": issuer + "/login/oauth/access_token",
+        "userinfo_endpoint": issuer + "/login/oauth/userinfo",
+        "jwks_uri": issuer + "/login/oauth/keys",
+        "response_types_supported": ["code"],
+        "grant_types_supported": ["authorization_code", "refresh_token"],
+        "token_endpoint_auth_methods_supported": ["client_secret_post"],
+        "code_challenge_methods_supported": ["S256"],
+        "scopes_supported": _oauth_metadata()["scopes_supported"],
     }
 
 
@@ -121,6 +145,12 @@ class MCPHandler(BaseHTTPRequestHandler):
         return True
 
     def do_GET(self):
+        if self.path in OAUTH_SERVER_METADATA_PATHS:
+            if not _oauth_issuer():
+                self._send_json(404, {"error": "not found"})
+                return
+            self._send_json(200, _oauth_server_metadata())
+            return
         if self.path in OAUTH_METADATA_PATHS:
             if not _oauth_issuer():
                 self._send_json(404, {"error": "not found"})
