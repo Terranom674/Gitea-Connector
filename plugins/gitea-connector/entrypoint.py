@@ -11,6 +11,16 @@ from urllib.parse import urlparse
 import server
 
 
+OAUTH_SCOPES = [
+    "write:repository",
+    "write:issue",
+    "read:user",
+    "read:organization",
+    "read:package",
+    "read:notification",
+]
+
+
 def configured_origin() -> str:
     raw = os.environ.get("GITEA_URL", "").strip().rstrip("/")
     if not raw:
@@ -42,6 +52,8 @@ def configure_server() -> None:
         description = tool.get("description")
         if isinstance(description, str):
             tool["description"] = description.replace("git.bratonien.de", urlparse(origin).netloc)
+        if os.environ.get("MCP_OAUTH_ISSUER", "").strip():
+            tool["securitySchemes"] = [{"type": "oauth2", "scopes": OAUTH_SCOPES}]
 
     original_handle_message = server.handle_message
     if getattr(original_handle_message, "_gitea_public_wrapper", False):
