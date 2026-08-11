@@ -1,7 +1,7 @@
 {
-  "name": "bratonien-gitea",
+  "name": "gitea-connectors",
   "interface": {
-    "displayName": "Bratonien Gitea Plugins"
+    "displayName": "Gitea Connectors"
   },
   "plugins": [
     {
@@ -17,4 +17,4 @@
       "category": "Developer Tools"
     }
   ]
-}\n
+}
