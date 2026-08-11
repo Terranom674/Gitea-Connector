@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# Frische Debian-LXC-Templates enthalten nicht immer en_US.UTF-8.
+# C.UTF-8 ist auf Debian vorhanden und vermeidet Locale-Warnungen bei apt/Docker.
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+unset LANGUAGE
+
 BASE_URL="https://raw.githubusercontent.com/Terranom674/Gitea-Connector/main/install"
 
 echo
