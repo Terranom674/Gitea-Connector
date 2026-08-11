@@ -1,13 +1,13 @@
 ---
 name: gitea-read
-description: Read repositories, files, branches, commits, tags, issues, pull requests, reviews, releases, and other permitted project data through a separately configured self-hosted Gitea MCP server.
+description: Read repositories, files, branches, commits, tags, issues, pull requests, reviews, releases, and other permitted project data through the plugin's self-hosted Gitea MCP connection.
 ---
 
 # Gitea Read
 
-Use the callable tools exposed by the user's already configured self-hosted Gitea MCP server for live repository information.
+Use the callable tools exposed by the plugin's self-hosted Gitea MCP connection for live repository information.
 
-The plugin does not start, host, provision, or configure an MCP connection. Do not require a fixed MCP display name. Identify the configured Gitea MCP by its Gitea-related tools and capabilities available in the current ChatGPT session.
+The plugin does not start, host, or provision an MCP server. Use the Gitea-related tools exposed by its declared remote Streamable HTTP MCP connection.
 
 ## Workflow
 
@@ -18,7 +18,7 @@ The plugin does not start, host, provision, or configure an MCP connection. Do n
 5. State when access is denied or data is absent. Do not infer private repository contents.
 6. For broader requests, use `list_available_operations`, then `describe_operation`, then execute only a GET operation.
 
-If the Gitea MCP tools are not callable in the current session, tell the user that their separately configured self-hosted Gitea MCP must be enabled in ChatGPT. Do not create or substitute a `.mcp.json`, Codex stdio MCP, GitHub connector, or public web search for private Gitea data.
+If the Gitea MCP tools are not callable in the current session, tell the user to check the installed plugin MCP connection and authentication in ChatGPT. Do not create or substitute a Codex stdio MCP, GitHub connector, or public web search for private Gitea data.
 
 ## Safety
 
