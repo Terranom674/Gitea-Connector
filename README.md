@@ -13,6 +13,26 @@ For the full Proxmox installation, have these values ready:
 
 The installer does **not** create the OpenAI tunnel credentials for you. Create the Secure MCP Tunnel and its runtime credentials in the OpenAI Platform before starting the installation, then keep the tunnel ID and runtime API key ready for section 4 of the installer.
 
+### Important: OpenAI Platform account required
+
+The tunnel is created in the **OpenAI Platform**, not inside the normal ChatGPT settings.
+
+Before you can create a tunnel, you need access to an OpenAI Platform account. If you have not used the OpenAI Platform before, create/activate the Platform account first and sign in there.
+
+After that you can open the Platform's **Tunnels** area and create a tunnel with **Create tunnel**. The created tunnel is then listed with its tunnel ID beginning with `tunnel_`.
+
+In short:
+
+1. Create/activate an OpenAI Platform account or sign in to the Platform.
+2. Open the **Tunnels** area.
+3. Select **Create tunnel**.
+4. Give the tunnel a name and create it.
+5. Copy the displayed tunnel ID (`tunnel_...`).
+6. Create a suitable tunnel runtime API key.
+7. Keep the tunnel ID and runtime API key ready for the Proxmox installer.
+
+Do this **before** starting the Proxmox installation. Otherwise the installer will reach section 4 without the required credentials.
+
 OpenAI documents Secure MCP Tunnel as the supported way to connect a private/on-premises MCP server to supported OpenAI products without exposing that MCP server directly to the public internet.
 
 ### OpenAI Secure MCP Tunnel preparation
